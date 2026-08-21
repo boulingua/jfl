@@ -5,7 +5,7 @@ today's empty scaffold (LICENSE + README + `brand/`) to a live, curriculum-align
 site that can flip from *coming-soon* to *active* on the boulingua world map.
 
 Signature accent **`#867B18`** (light) / **`#E7DC7E`** (dark), pentagon mark.
-Course code **`jfl`** — already registered in `pagegen`'s `data/accents.yaml`.
+Course code **`jfl`** — already registered in the kit's `data/accents.yaml`.
 
 ---
 
@@ -13,7 +13,7 @@ Course code **`jfl`** — already registered in `pagegen`'s `data/accents.yaml`.
 
 **What this is.** A free, openly-licensed Japanese course for the German
 *Gesamtschule* system and for independent learners, built on the shared
-`pagegen` template and mapped to the boulingua CEFR curriculum framework. Site
+boulingua `kit` and mapped to the boulingua CEFR curriculum framework. Site
 metalanguage of instruction is **German** (legal pages, scaffolding, glosses);
 the target language is **Standard (Tokyo) Japanese**.
 
@@ -65,9 +65,10 @@ Each item is an opinionated recommendation, to be ratified before Phase 1.
 - **Web font.** **Recommend** self-hosted **Noto Sans JP** (UI/body) + optional
   **Noto Serif JP** for reading passages, **subset** to the taught kana + kanji
   set per level to keep the payload sane (full JP fonts are multi-MB). `unicode-range`
-  + `font-display: swap`; committed under `static/fonts/`. This is the one
-  sanctioned deviation from the template's Latin-only font assumption; document it
-  in `assets/css/custom.css` next to the accent hook.
+  + `font-display: swap`, both emitted by the kit's font build (F3) rather than
+  hand-written. The per-level subsetting is the one real deviation from the Latin
+  font assumption and it is a kit capability, not a course file: a course repo has
+  no `static/fonts/` and no `assets/css/`.
 - **Pitch accent.** Notate with the standard overline + downstep (`ꜜ`) convention;
   provide a Pre-A1 appendix explaining it and reference it from vocabulary lists.
 - **TTS / native voice. Decided: transcript-only, on licence grounds.** A
@@ -84,7 +85,7 @@ Each item is an opinionated recommendation, to be ratified before Phase 1.
   `jfl` therefore ships **transcript-only** at every level: the unit page renders
   its `<details>` transcript with the player slot empty. Revisit only if an
   openly-licensed Japanese voice appears upstream. Voice IDs are read from
-  `audiogen/voices.yml` (relocating to `kit/audio/voices.yml` at F1) and are never
+  `kit/audio/voices.yml` and are never
   hand-typed — a transliterated ID is how a 404 gets written into a download
   script.
 - **Level-0 stage.** A first-class **Pre-A1 "script onboarding"** section
@@ -92,40 +93,66 @@ Each item is an opinionated recommendation, to be ratified before Phase 1.
 
 ---
 
-## 3. Instantiation from pagegen
+## 3. Instantiation from the kit
 
-Stand the site up first; author content second. Steps:
+Stand the site up first; author content second. Nothing below copies code: the
+shared surface is imported, not cloned. Steps:
 
-1. **Copy the template.** Copy `pagegen`'s tracked tree (everything except
-   `public/`, `resources/`, `.hugo_build.lock`) into `jfl/`, preserving
-   `archetypes/`, `layouts/`, `scripts/`, `.github/workflows/build-deploy.yml`,
-   `data/`, `i18n/`, the legal pages and the shortcode landings.
-2. **Edit the marked `hugo.toml` values (only these):**
+1. **Create the repo around the kit import.** `jfl` gets a short `hugo.toml`
+   (the marked values below plus `[module] [[module.imports]] path =
+   "github.com/boulingua/kit"`), a `go.mod`/`go.sum` carrying `require
+   github.com/boulingua/kit v1.0.0`, `boulingua.yml` (the only per-course config
+   the gate battery reads), the twelve-line `.github/workflows/deploy.yml` taken
+   verbatim from `kit/templates/deploy.yml`, an empty `content/` skeleton and the
+   three legal pages. `layouts/`, `assets/`, `scripts/`, `i18n/` and
+   `archetypes/` are **not** copied and must never appear in `jfl/` — they are
+   the drift surface, and a file that is not in the repo cannot fork. Hugo
+   resolves them from the module at the pinned tag; CI checks the same tag out
+   for the gate battery, and `bin/kit` does it locally.
+2. **Vendor `_materials/`.** `kit materials sync` assembles the `.sty` files,
+   the fonts and the icon PDFs flat into `jfl/_materials/`, because XeLaTeX
+   cannot read a Hugo module. It is the only vendored surface in the repo, every
+   byte of it is digest-locked in `kit.lock`, and a hand edit fails the next
+   `bin/kit check`. (The old instruction to copy `_materials/` "from the
+   template" was never executable — `pagegen/_materials/` did not exist.)
+3. **Edit the marked `hugo.toml` values (only these):**
    - `baseURL = "https://boulingua.github.io/jfl/"`
    - `title = "Japanese — S. Le Boulanger"`
    - `languageCode = "de"`, `defaultContentLanguage = "de"`
    - `[params].navTitle = "Japanese"`, `description`, `keywords`
      (`Japanese,Japanisch,CEFR,JLPT,hiragana,katakana,kanji,OER`)
-   - `params.code = "jfl"`
-   - `[params.plausible].domain = "boulingua.github.io/jfl"` (keep the block **last**)
+   - `params.code = "jfl"` — this now carries more weight, not less: the kit
+     ships the neutral graphite `template` accent, so a course that forgets its
+     code renders obviously unfinished instead of quietly looking like DaF.
+     Gate F7-C3 makes an unset code fatal.
+   - `[params.plausible].domain = "boulingua.github.io/jfl"` — keep the block
+     **last**, after every bare `[params]` key. TOML scopes everything after a
+     header to that header, so a sub-table opened early silently swallows the
+     keys above it.
    - `[[params.social]].url = "https://github.com/boulingua/jfl"`
    - `[[menu.main]]` — mirror the real sections: Pre-A1 (Script), A1, A2, B1,
      Materials, About, Legal.
-3. **Regenerate the pentagon.** Confirm `data/accents.yaml` carries the `jfl`
-   row (accent `#867B18`, hover `#5F5811` — already present), then run
-   `python brand/make_icon.py` to emit the pentagon + favicons for `jfl`.
-   The accent flows from `code` through `assets/css/custom.css`; **do not edit CSS**
-   except to add the CJK `@font-face` block (§2).
-4. **Fill legal placeholders.** Replace the `⟨…⟩` placeholders in `impressum.md`,
+4. **Regenerate the pentagon.** The kit's `data/accents.yaml` already carries the
+   `jfl` row (accent `#867B18`, hover `#5F5811`); confirm it, then run the kit's
+   `make_icon.py` to emit the pentagon + favicons for `jfl` into `brand/`, which
+   is the one brand surface the course owns. The accent flows from `code` through
+   the kit's CSS; there is **no** course CSS to edit, and the CJK face arrives
+   with the kit font tier named by `script_tier` in `boulingua.yml` (§2) rather
+   than as a hand-added `@font-face`.
+5. **Fill legal placeholders.** Replace the `⟨…⟩` placeholders in `impressum.md`,
    `datenschutz.md`, `haftungsausschluss.md`; keep the VG Wort METIS disclosure in
-   Datenschutz.
-5. **First green build.** `hugo --gc --minify` clean; run the local gate battery
-   in `scripts/` (VG Wort coverage/render, legal placeholders, downloads,
-   attribution). Enable **GitHub Pages** via `build-deploy.yml`; confirm the
-   deployed placeholder home renders with the correct accent and CJK font.
+   Datenschutz. The placeholder gate is blocking — there is no `|| true` to drop,
+   because suppressions are prohibited org-wide.
+6. **First green build.** `hugo --gc --minify --panicOnWarning` clean — a warning
+   is now a failed build — then `bin/kit check`, which is the same gate battery CI
+   runs (VG Wort coverage/render, legal placeholders, downloads, attribution,
+   `_materials/` digests). Push to `main`, enable **GitHub Pages**, and confirm
+   the deployed placeholder home renders with the correct accent and CJK font.
 
 **Exit criterion for §3:** a green Pages deploy of an empty-but-correct `jfl`
-site (nav, accent, pentagon, CJK font, legal pages, VG Wort plumbing live).
+site (nav, accent, pentagon, CJK font, legal pages, VG Wort plumbing live), with
+no `layouts/`, `assets/`, `scripts/`, `i18n/` or `archetypes/` anywhere in the
+repo.
 
 ---
 
@@ -212,23 +239,23 @@ work/opinions), so vocabulary and kanji recur in widening contexts.
 - **Section landings** rendered by the template shortcodes (never raw HTML); each
   level `_index.md` is `page_type: section` listing its units + exam.
 - **Materials pipeline.** Decks and worksheets generated locally from the branded
-  **slidegen**/**sheetgen** LaTeX templates (accent-driven), exported to
+  LaTeX templates in `kit/latex/` (accent-driven), exported to
   committed `.odp` + PDF under `static/materials/` and `static/downloads/`;
   **CI only verifies** presence/attribution (no TeX Live in the deploy path).
   Japanese LaTeX needs a CJK-capable toolchain (LuaLaTeX + `luatexja` or XeLaTeX
   + Noto CJK) — a one-time local setup for the author.
 - **Furigana in materials.** The deck/worksheet templates must render ruby too
   (LuaLaTeX `ruby` package) so print and web agree.
-- **Native-voice audio: none, by decision (§2).** The **audiogen**/**Piper**
-  pipeline is not run for `jfl`. The sole Japanese voice,
+- **Native-voice audio: none, by decision (§2).** The kit's Piper pipeline
+  (`kit/audio/build_audio.py`) is not run for `jfl`. The sole Japanese voice,
   `ja_JA-hi_fi_captain-medium`, is `CC BY-NC-SA 4.0` and cannot be redistributed
   inside CC BY-SA 4.0 content — and its two speakers, which would have carried
   alternating dialogue turns, go with it. Dialogues therefore mark turns
   typographically, and every listening-shaped task ships as a written transcript
   with the player slot empty. None of this is a quality judgement and no spike
   changes it. If an openly-licensed Japanese voice lands upstream it arrives as a
-  row in `audiogen/voices.yml` (`kit/audio/voices.yml` from F1); voice IDs are
-  read from that registry and never hand-typed here.
+  row in `kit/audio/voices.yml` — the registry is the single source of truth for
+  voice IDs, which are read from it and never hand-typed into prose.
 - **Thumbnails** via `scripts/render_thumbs.py`; **downloads** verified by
   `scripts/verify_downloads.py`.
 
@@ -236,7 +263,7 @@ work/opinions), so vocabulary and kanji recur in widening contexts.
 
 ## 7. VG Wort — pixel assignment for ALL content pages
 
-**Required and non-skippable.** Per `pagegen/docs/vgwort-standard.md`, **every**
+**Required and non-skippable.** Per `kit/docs/vgwort-standard.md`, **every**
 content page that is original creative prose **≥ 1800 rendered characters** gets
 exactly **one** VG Wort Zählmarke, on exactly one URL.
 
@@ -262,7 +289,7 @@ exactly **one** VG Wort Zählmarke, on exactly one URL.
 
 ## 8. Milestones & sequencing
 
-1. **M0 — Site up (Phase 3 above).** `jfl` instantiated from `pagegen`, green
+1. **M0 — Site up (Phase 3 above).** `jfl` stood up on the kit (§3), green
    Pages deploy, accent + pentagon + CJK font live, legal filled, VG Wort plumbing
    verified. *(dep: none)*
 2. **M1 — Furigana + font spike.** `{{< furi >}}` shortcode, subset Noto JP fonts,
@@ -311,7 +338,7 @@ prerequisite for going active.
 - **Kanji sequencing.** No single canonical order for OER. *Mitigation:* sequence
   by JLPT band + frequency + theme recurrence; kanji index appendix makes it
   auditable.
-- **CJK LaTeX toolchain.** slidegen/sheetgen assume Latin. *Mitigation:* one-time
+- **CJK LaTeX toolchain.** The kit's LaTeX templates assume Latin. *Mitigation:* one-time
   LuaLaTeX + `luatexja`/Noto CJK setup, documented; CI stays verify-only.
 - **Romaji creep.** Risk of learners leaning on romaji. *Mitigation:* romaji
   strictly confined to Pre-A1 and A1 vocab lists; reading passages kana/kanji only.
