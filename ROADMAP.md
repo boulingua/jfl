@@ -37,9 +37,11 @@ lower-intermediate.
    CEFR. A published, defensible crosswalk is required so units carry both.
 4. **Phonology beyond the segment.** Pitch accent and mora timing must be taught
    and notated — they map to `LING.phonological-control` and are not optional.
-5. **CJK web font + Japanese TTS.** A self-hosted CJK font (weight/subset budget)
-   and a Japanese Piper voice whose quality is **not yet proven** — an explicit
-   go/no-go decision, not an assumption.
+5. **CJK web font, and no shippable Japanese voice.** A self-hosted CJK font
+   (weight/subset budget), and audio that **cannot ship**: the one Japanese voice
+   upstream carries is licensed `CC BY-NC-SA 4.0` and cannot sit inside a
+   CC BY-SA 4.0 work. `jfl` is transcript-only by decision, not by omission — see
+   §2.
 
 ---
 
@@ -68,12 +70,23 @@ Each item is an opinionated recommendation, to be ratified before Phase 1.
   in `assets/css/custom.css` next to the accent hook.
 - **Pitch accent.** Notate with the standard overline + downstep (`ꜜ`) convention;
   provide a Pre-A1 appendix explaining it and reference it from vocabulary lists.
-- **TTS / native voice.** **Decision required.** Evaluate the `ja_JP` Piper voice
-  in `audiogen`; Japanese needs OpenJTalk/MeCab-grade text normalisation
-  (kanji→reading, pitch) that `espeak-ng` phonemisation handles poorly. **Recommend:**
-  gate audio behind a quality spike (§6); if the open voice is inadequate, ship
-  Phases 1–2 **text-first** and add audio when an acceptable openly-licensed voice
-  exists — do not block content on it.
+- **TTS / native voice. Decided: transcript-only, on licence grounds.** A
+  Japanese voice *does* exist upstream — `ja_JA-hi_fi_captain-medium`, medium
+  tier, **two speakers in one model**, which would have given dialogues genuine
+  alternating turns. Note the locale tag: upstream writes **`ja_JA`**, not
+  `ja_JP`. It still cannot be used. Its dataset is licensed
+  **`CC BY-NC-SA 4.0`**, and a NonCommercial model's output cannot be
+  redistributed inside a CC BY-SA 4.0 work at all. So the question is settled by
+  **licence**, not by quality: the `espeak-ng` normalisation problem
+  (kanji→reading, pitch accent) never gets to be the deciding factor. It is the
+  only Japanese voice in the catalogue, so there is no second same-locale voice to
+  fall back to, and a voice is never substituted from a neighbouring language.
+  `jfl` therefore ships **transcript-only** at every level: the unit page renders
+  its `<details>` transcript with the player slot empty. Revisit only if an
+  openly-licensed Japanese voice appears upstream. Voice IDs are read from
+  `audiogen/voices.yml` (relocating to `kit/audio/voices.yml` at F1) and are never
+  hand-typed — a transliterated ID is how a 404 gets written into a download
+  script.
 - **Level-0 stage.** A first-class **Pre-A1 "script onboarding"** section
   (`content/level-pre-a1/`) precedes A1 — see §5.
 
@@ -141,12 +154,16 @@ site (nav, accent, pentagon, CJK font, legal pages, VG Wort plumbing live).
   more `{LEVEL}.{DOMAIN}.{SCALE}.{SEQ}` IDs from `curriculum/levels/`. Never mint
   IDs locally; reference existing ones (add to the framework upstream if a needed
   statement is missing).
-- **Machine-readable scope manifest.** Publish `curriculum/conformance.yml` in the
-  repo (mirroring `examples/de-a1/conformance.yml`): `language: ja`, `level`
+- **Machine-readable scope manifest.** Publish `conformance.yml` at the **repo
+  root** — not under `curriculum/`; all eighteen courses put it in the same place
+  (mirroring `examples/de-a1/conformance.yml`): `language: ja`, `level`
   coverage, `declared_conformance`, and `realizations` mapping each unit's
-  can-dos to `implements_id`s. It **must pass `curriculum/scripts/id-audit.sh`**
-  (format, global uniqueness, every `implements_id` resolves). Wire that audit
-  into CI as a blocking gate.
+  can-dos to `implements_id`s.
+  **Gate.** The reusable workflow
+  `boulingua/.github/.github/workflows/course-build.yml@v1` runs
+  `python .curriculum/scripts/conformance_audit.py resolve --manifest conformance.yml --content content`.
+  `id-audit.sh` audits the framework's *own* level files and **cannot** validate
+  this repo. Do not wire it here.
 - **JLPT crosswalk (appendix + front-matter).** N5≈A1, N4≈A2, N4–N3≈A2/B1,
   N3≈B1 (N2≈B2, N1≈C1 documented but out of course scope). Each unit carries both
   its CEFR IDs and a JLPT tag; the crosswalk rationale lives in an appendix.
@@ -181,7 +198,7 @@ work/opinions), so vocabulary and kanji recur in widening contexts.
 - **Acceptance criteria per phase:**
   - Each unit: five-step structure complete; differentiated exercises **with
     answer keys**; teacher notes; furigana correct; CEFR IDs + JLPT tag in
-    front-matter and resolving via `id-audit.sh`; sources openly-licensed/PD and
+    front-matter and resolving under the §4 gate; sources openly-licensed/PD and
     cited; committed `.odp` deck + PDF worksheet with thumbnails.
   - Each exam: sibling bundle, `duration_min` / `total_points` / `notenschluessel`
     set, PDF under `static/downloads/<level>/`.
@@ -202,11 +219,16 @@ work/opinions), so vocabulary and kanji recur in widening contexts.
   + Noto CJK) — a one-time local setup for the author.
 - **Furigana in materials.** The deck/worksheet templates must render ruby too
   (LuaLaTeX `ruby` package) so print and web agree.
-- **Native-voice audio.** Generated by **audiogen**/**Piper**, committed as
-  OGG/Opus. **Japanese availability is the open decision (§2):** run a quality
-  spike on the `ja_JP` voice + OpenJTalk normalisation early; ship audio only when
-  it meets bar, otherwise ship text-first and backfill. Where used, a second voice
-  enables alternating speakers in dialogues.
+- **Native-voice audio: none, by decision (§2).** The **audiogen**/**Piper**
+  pipeline is not run for `jfl`. The sole Japanese voice,
+  `ja_JA-hi_fi_captain-medium`, is `CC BY-NC-SA 4.0` and cannot be redistributed
+  inside CC BY-SA 4.0 content — and its two speakers, which would have carried
+  alternating dialogue turns, go with it. Dialogues therefore mark turns
+  typographically, and every listening-shaped task ships as a written transcript
+  with the player slot empty. None of this is a quality judgement and no spike
+  changes it. If an openly-licensed Japanese voice lands upstream it arrives as a
+  row in `audiogen/voices.yml` (`kit/audio/voices.yml` from F1); voice IDs are
+  read from that registry and never hand-typed here.
 - **Thumbnails** via `scripts/render_thumbs.py`; **downloads** verified by
   `scripts/verify_downloads.py`.
 
@@ -245,11 +267,14 @@ exactly **one** VG Wort Zählmarke, on exactly one URL.
    verified. *(dep: none)*
 2. **M1 — Furigana + font spike.** `{{< furi >}}` shortcode, subset Noto JP fonts,
    ruby toggle, pitch-accent notation proven in web **and** LaTeX. *(dep: M0)*
-3. **M2 — TTS go/no-go.** Japanese Piper/OpenJTalk quality spike decided; audio
-   either in-scope or deferred with a written rationale. *(dep: M0; parallel to M1)*
+3. **M2 — TTS position recorded (no spike needed).** The go/no-go is already
+   answered on licence grounds (§2), so M2 shrinks to writing that rationale into
+   the About page and the conformance notes: no Japanese audio ships, dialogue
+   turns are marked typographically, transcripts stand in.
+   *(dep: M0; parallel to M1)*
 4. **M3 — MVP: Pre-A1 script stage live.** 5 script units + script exam +
    hiragana/katakana/pitch appendices, materials committed, marks assigned,
-   conformance manifest passing `id-audit.sh`. **First flippable milestone.**
+   repo-root `conformance.yml` green under the §4 gate. **First flippable milestone.**
    *(dep: M1)*
 5. **M4 — A1 (N5) complete.** 12 units + exam + glossary/crosswalk appendices.
    *(dep: M3)*
@@ -258,19 +283,24 @@ exactly **one** VG Wort Zählmarke, on exactly one URL.
 
 **Definition of "done / ready to flip from coming-soon to active":** M0–M4
 achieved — i.e. the site is live and stable, the Pre-A1 script stage **and** the
-full A1 level are published with materials, answer keys, thumbnails and (if in
-scope) audio; every content page carries its Zählmarke and passes the render
-gate; the `curriculum/conformance.yml` manifest passes `id-audit.sh`; all CI
-gates green. B1-complete `core` conformance (M6) is the subsequent target, not a
+full A1 level are published with materials, answer keys, thumbnails and
+transcripts in place of audio (§2); every content page carries its Zählmarke and
+passes the render gate; the repo-root `conformance.yml` manifest is green under
+the §4 gate; all CI gates green. B1-complete `core` conformance (M6) is the subsequent target, not a
 prerequisite for going active.
 
 ---
 
 ## 9. Open decisions & risks (language-specific)
 
-- **Japanese TTS quality (highest risk).** Open Piper voice may be inadequate;
-  normalisation (kanji reading, pitch) is hard. *Mitigation:* M2 spike; text-first
-  fallback; audio never blocks content.
+- **Japanese audio is closed, not risky.** The single upstream voice,
+  `ja_JA-hi_fi_captain-medium` (medium tier, two speakers), is `CC BY-NC-SA 4.0`
+  and so unusable in a CC BY-SA 4.0 course; there is no second Japanese voice and
+  no substitution across languages. *Consequence:* `jfl` is transcript-only, and
+  this is no longer the course's top risk. What remains is **pedagogical**:
+  listening-shaped `REC.*` work has to be carried by transcripts and by reading
+  aloud in class, which the About page must say plainly so the declared coverage
+  is not read as a claim about audio.
 - **Font payload.** Full Noto JP is multi-MB. *Mitigation:* per-level `unicode-range`
   subsetting to the taught character set; `font-display: swap`.
 - **Furigana correctness at scale.** Wrong readings mislead learners. *Mitigation:*
