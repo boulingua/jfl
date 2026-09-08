@@ -1,0 +1,41 @@
+{{/*
+  furi — Furigana (ruby) annotation for Japanese text.
+
+  This is the one shortcode the shared template does not carry: Japanese needs
+  reading aids over kanji, and they must be real markup rather than a picture
+  or a parenthesis, so that they can be styled, hidden per reader, and read by
+  assistive technology. `markup.goldmark.renderer.unsafe = true` in hugo.toml
+  is what lets it emit <ruby> from Markdown.
+
+  Readings come from the vetted vocabulary list of the unit — never from
+  automatic assignment. A wrong reading is worse than no reading.
+
+  Usage
+    {{< furi "漢字" "かんじ" >}}
+      → <ruby>漢字<rp>（</rp><rt>かんじ</rt><rp>）</rp></ruby>
+
+    Per-character annotation: split BOTH arguments on "|", same number of
+    parts, and each part is paired with its own <rt>:
+
+    {{< furi "日|本|語" "に|ほん|ご" >}}
+      → <ruby>日<rp>（</rp><rt>に</rt><rp>）</rp>本…語…</ruby>
+
+  <rp> holds the fallback parentheses for user agents without ruby support,
+  so the reading degrades to 漢字（かんじ） instead of vanishing.
+
+  Hiding the readings: layouts do not toggle this; assets/css/custom.css
+  carries the `body.furigana-off` hook, which hides <rt> without reflowing
+  the line. See ROADMAP.md §2 (furigana density is a level policy: full at
+  A1, above the current JLPT band only at A2/B1).
+*/}}
+{{- $base := or (.Get "base") (.Get 0) -}}
+{{- $read := or (.Get "rt") (.Get 1) -}}
+{{- if or (not $base) (not $read) -}}
+  {{- errorf "furi: needs a base and a reading — {{< furi \"漢字\" \"かんじ\" >}} (%s)" .Position -}}
+{{- end -}}
+{{- $bases := split $base "|" -}}
+{{- $reads := split $read "|" -}}
+{{- if ne (len $bases) (len $reads) -}}
+  {{- errorf "furi: %d base segment(s) but %d reading segment(s) in %q / %q (%s)" (len $bases) (len $reads) $base $read .Position -}}
+{{- end -}}
+<ruby>{{- range $i, $b := $bases -}}{{ $b }}<rp>（</rp><rt>{{ index $reads $i }}</rt><rp>）</rp>{{- end -}}</ruby>

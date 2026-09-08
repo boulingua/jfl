@@ -1,0 +1,169 @@
+# ─────────────────────────────────────────────────────────────────────────
+# jfl — boulingua Japanese course, instantiated from the pagegen template
+# (Hugo + hugo-coder). Only the values marked CHANGE in pagegen differ from
+# the shared standard; everything else is the template and must stay aligned.
+#
+# Metalanguage of the site is German (scaffolding, glosses, legal pages);
+# the target language is Standard (Tokyo) Japanese. See ROADMAP.md §2.
+# ─────────────────────────────────────────────────────────────────────────
+
+baseURL = "https://boulingua.github.io/jfl/"
+title = "Japanese — S. Le Boulanger"
+languageCode = "de"
+defaultContentLanguage = "de"
+enableEmoji = false
+enableRobotsTXT = true
+
+[pagination]
+  pagerSize = 20
+
+[markup.highlight]
+  noClasses = false
+
+# `unsafe = true` is what lets the {{< furi >}} shortcode emit real <ruby>
+# markup from Markdown — furigana is a hard requirement for this course.
+[markup.goldmark.renderer]
+  unsafe = true
+
+[markup.tableOfContents]
+  startLevel = 2
+  endLevel = 3
+  ordered = false
+
+# Tags are DECLARED, not implicit — derive them from structured fields.
+[taxonomies]
+  tag = "tags"
+  skill = "skills"
+  level = "levels"
+  topic = "topics"
+
+[params]
+  navTitle = "Japanese"
+  author = "S. Le Boulanger"
+  description = "Japanisch als Fremdsprache — offen lizenzierter Kurs von Pre-A1 (Schrift) bis B1, GER-orientiert und mit JLPT-Zuordnung N5–N3."
+  keywords = "Japanese,Japanisch,CEFR,JLPT,hiragana,katakana,kanji,OER"
+  dateFormat = "2006-01-02"
+  since = 2025
+  colorScheme = "auto"
+  hideCredits = true
+  # The colour-scheme toggle is a labelled control in the navbar
+  # (layouts/_partials/header.html); disable the theme's floating duplicate
+  # so there is exactly one toggle on the page.
+  hideColorSchemeToggle = true
+  customCSS = ["css/custom.css"]
+  # Site code — selects this course's accent (#867B18 / #E7DC7E) from
+  # data/accents.yaml. Never edit the accent in CSS.
+  code = "jfl"
+  # Content licence, surfaced by pdf attribution + legal pages.
+  license = "CC BY-SA 4.0"
+
+  # IMPORTANT — every sub-table under [params] MUST come AFTER all bare
+  # [params] keys. TOML scopes everything after a header to that header, so
+  # opening [params.plausible] before the keys above would silently move them
+  # under params.plausible and leave the site unstyled. Keep this block LAST.
+  [params.plausible]
+    # Privacy-friendly, cookieless analytics on the author's self-hosted
+    # instance (server in Germany), as on the sister sites — disclosed in
+    # /datenschutz/, which describes exactly this setup. `script.js` is the
+    # plain cookieless variant: no download or outbound-link tracking.
+    domain = "boulingua.github.io/jfl"
+    src = "https://analytics.hellebo.de/js/script.js"
+
+[[params.social]]
+  name = "GitHub"
+  icon = "fa-brands fa-github fa-2x"
+  weight = 1
+  url = "https://github.com/boulingua/jfl"
+
+# ── Navigation — mirrors content/. Labels are German (site metalanguage);
+# the level labels carry the JLPT band because Japanese pedagogy speaks JLPT
+# while the framework speaks CEFR (see ROADMAP.md §4). Start lives behind the
+# navbar brand. Groups have an identifier; children set `parent`.
+[[menu.main]]
+  name = "Stufen"
+  weight = 2
+  identifier = "levels"
+[[menu.main]]
+  parent = "levels"
+  weight = 21
+  name = "Pre-A1 — Schrift"
+  url = "/level-pre-a1/"
+[[menu.main]]
+  parent = "levels"
+  weight = 22
+  name = "A1 — JLPT N5"
+  url = "/level-a1/"
+[[menu.main]]
+  parent = "levels"
+  weight = 23
+  name = "A2 — JLPT N4"
+  url = "/level-a2/"
+[[menu.main]]
+  parent = "levels"
+  weight = 24
+  name = "B1 — JLPT N3"
+  url = "/level-b1/"
+
+[[menu.main]]
+  name = "Material"
+  weight = 3
+  identifier = "materials"
+[[menu.main]]
+  parent = "materials"
+  weight = 31
+  name = "Foliensätze"
+  url = "/materials/presentations/"
+[[menu.main]]
+  parent = "materials"
+  weight = 32
+  name = "Arbeitsblätter"
+  url = "/materials/worksheets/"
+
+[[menu.main]]
+  name = "Anhänge"
+  weight = 4
+  identifier = "appendices"
+[[menu.main]]
+  parent = "appendices"
+  weight = 41
+  name = "Übersicht"
+  url = "/appendices/"
+[[menu.main]]
+  parent = "appendices"
+  weight = 42
+  name = "JLPT ↔ GER"
+  url = "/appendices/jlpt-ger-crosswalk/"
+
+[[menu.main]]
+  name = "Über"
+  weight = 5
+  identifier = "about"
+[[menu.main]]
+  parent = "about"
+  weight = 51
+  name = "Über diesen Kurs"
+  url = "/about/"
+
+[[menu.main]]
+  name = "Rechtliches"
+  weight = 9
+  identifier = "legal"
+[[menu.main]]
+  parent = "legal"
+  weight = 91
+  name = "Impressum"
+  url = "/impressum/"
+[[menu.main]]
+  parent = "legal"
+  weight = 92
+  name = "Datenschutz"
+  url = "/datenschutz/"
+[[menu.main]]
+  parent = "legal"
+  weight = 93
+  name = "Haftungsausschluss"
+  url = "/haftungsausschluss/"
+
+[module]
+  [[module.imports]]
+    path = "github.com/luizdepra/hugo-coder"
